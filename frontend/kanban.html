@@ -1,0 +1,41 @@
+<html>
+<head>
+<style>
+	#draggable { width: 150px; height: 150px; padding: 0.5em; }
+
+#follower {
+  position:absolute;
+  background-color:#abc;
+  left:50px;
+  width:90px;
+  height:90px;
+  margin:5px;
+}
+  
+	</style>
+  
+</head>
+<body>
+<div class="demo">
+
+<div id="draggable" class="ui-widget-content">
+	<p>Drag me around</p>
+</div>
+
+</div><!-- End demo -->
+<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js' ></script>
+<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js' ></script>
+  
+	<script>
+		$( "#draggable" ).draggable({
+   drag: function(event, ui) {
+     $.ajax({
+        url: "http://127.0.0.1:8124/?id=draggable&top=" + ui.position.top + "&left=" + ui.position.left,
+        context: document.body,
+      });
+  }
+});
+	</script>
+
+</body>
+</html>
