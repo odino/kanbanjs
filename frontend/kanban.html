@@ -1,31 +1,65 @@
 <html>
 <head>
 <style>
-	#draggable { width: 150px; height: 150px; padding: 0.5em; }
-
-#follower {
-  position:absolute;
-  background-color:#abc;
-  left:50px;
-  width:90px;
-  height:90px;
-  margin:5px;
-}
-  
-	</style>
+	#draggable { width: 150px; height: 150px; padding: 0.5em; }  
+    .column { border-right: 1px solid black; height: 100%; float: left; text-align: center, width: 100% }
+    .menu { width: 100% }
+    .wrapper { width: 1024px }
+</style>
   
 </head>
 <body>
-<div class="demo">
-
-<div id="draggable" class="ui-widget-content">
-	<p>Drag me around</p>
+<div class="wrapper">
+<div class='menu'>
+    <a href='' id='columnAdd' >Add a column</a>
+    <a href='' id='storyAdd' >Add a story</a>
+</div>
+<div class='column'>
+	<h1>Can I haz storiez?</h1>
 </div>
 
-</div><!-- End demo -->
+</div>
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js' ></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js' ></script>
-  
+<script>
+$( "#columnAdd" ).click(function(){
+  var columns = $( ".column" ).length + 1;
+  $( ".column" ).last().after('<div class="column"><h1>Plz more</h1></div>');
+  $( ".column" ).css('width', 90/columns + '%');
+  return false;
+});
+$( "#storyAdd" ).click(function(){
+    $( ".column" ).first().append('<div class="movable editable story" id="story-' + $('.story').length + '" >Story</div>');
+    $( ".movable" ).draggable({
+       drag: function(event, ui) {
+        info = {};
+        info.id = $(this).attr('id');
+        info.top = ui.position.top;
+       info.left = ui.position.left;
+        info.rid = rid;
+        socket.send(info);
+      }
+    });
+    $( ".editable" ).dblclick(function(){
+      id = $(this).attr('id');
+      story = $("#" + id);
+      $("input").remove();
+      story.hide();
+      story.after("<input type='text' value='" + $("#" + id).html() + "' />");
+      $("input").css('left', story.position().left + 'px');
+      $("input").css('top', story.position().top + 'px');
+      console.log(story.position());
+        $("input").dblclick(function(){
+            story.html($(this).attr('value'));
+            $("input").remove();
+            story.show();
+        });
+    });
+
+
+    return false;
+});
+</script>
 
 <script src="http://127.0.0.1:8124/socketio.js"></script> 
 <script> 
@@ -35,27 +69,13 @@
  socket.on('connect', function(){ console.log('connect') }) 
  socket.on('message', function(mess){
 
-  console.log(mess);
   if (rid !== mess.rid)
-  {
-    $( "#" + mess.id ).animate({ 'top': mess.top, 'left': mess.left }, 'fast');
+  { 
+    console.log(mess);
+    $( "#" + mess.id ).animate({ 'top': mess.top, 'left': mess.left }, 0);
   }
 }) 
  socket.on('disconnect', function(){ console.log('disconnect') }) 
 </script> 
-
-	<script>
-$( "#draggable" ).draggable({
-   drag: function(event, ui) {
-    info = {};
-    info.id = 'draggable';
-    info.top = ui.position.top;
-    info.left = ui.position.left;
-    info.rid = rid;
-    socket.send(info);
-  }
-});
-	</script>
-
 </body>
 </html>
