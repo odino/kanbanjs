@@ -50,7 +50,9 @@ function addStory ()
       story.hide();
       story.after("<input type='text' value='" + $("#" + id).html() + "' />");
       $('input').css('position', 'absolute');
-      console.log(story.position());
+      $('input').css('left', story.css('left'));
+      var top = parseInt(story.css('top'));
+      $('input').css('top', (top + 100) + 'px');
         $("input").focusout(function(){
             val = $(this).attr('value');
             story.html(val);
