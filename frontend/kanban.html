@@ -22,20 +22,23 @@
 <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js' ></script>
 <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js' ></script>
 <script>
-$( "#columnAdd" ).click(function(){
+
+function addColumn ()
+{
   var columns = $( ".column" ).length + 1;
   $( ".column" ).last().after('<div class="column"><h1>Plz more</h1></div>');
   $( ".column" ).css('width', 90/columns + '%');
-  return false;
-});
-$( "#storyAdd" ).click(function(){
+}
+
+function addStory ()
+{
     $( ".column" ).first().append('<div class="movable editable story" id="story-' + $('.story').length + '" >Story</div>');
     $( ".movable" ).draggable({
        drag: function(event, ui) {
         info = {};
         info.id = $(this).attr('id');
         info.top = ui.position.top;
-       info.left = ui.position.left;
+        info.left = ui.position.left;
         info.rid = rid;
         socket.send(info);
       }
@@ -46,18 +49,37 @@ $( "#storyAdd" ).click(function(){
       $("input").remove();
       story.hide();
       story.after("<input type='text' value='" + $("#" + id).html() + "' />");
-      $("input").css('left', story.position().left + 'px');
-      $("input").css('top', story.position().top + 'px');
+      $('input').css('position', 'absolute');
       console.log(story.position());
-        $("input").dblclick(function(){
-            story.html($(this).attr('value'));
+        $("input").focusout(function(){
+            val = $(this).attr('value');
+            story.html(val);
+	    info = {};
+            info.storyId = id;
+	    info.storyValue = val;
+	    info.rid = rid;
+	    socket.send(info);
             $("input").remove();
             story.show();
         });
     });
+}
 
-
-    return false;
+$( "#columnAdd" ).click(function(){
+  addColumn();
+  info = {};
+  info.column = 1;
+  info.rid = rid;
+  socket.send(info);
+  return false;
+});
+$( "#storyAdd" ).click(function(){
+  addStory();
+  info = {};
+  info.story = 1;
+  info.rid = rid;
+  socket.send(info);
+  return false;
 });
 </script>
 
@@ -68,6 +90,25 @@ $( "#storyAdd" ).click(function(){
  socket.connect();
  socket.on('connect', function(){ console.log('connect') }) 
  socket.on('message', function(mess){
+
+  if (mess.column && rid !== mess.rid)
+  {
+    addColumn();
+  }
+
+  if (mess.story && rid !== mess.rid)
+  {
+    addStory();
+  }
+
+  if (mess.storyId && rid !== mess.rid)
+  {
+    console.log('editing story with');
+    console.log(mess);
+    story = $("#" + mess.storyId);
+    val = mess.storyValue;
+    story.html(val);
+  }
 
   if (rid !== mess.rid)
   { 
