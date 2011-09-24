@@ -1,45 +1,52 @@
 var http = require('http');
-var io = require('./socketio');
+var io   = require('socket.io');
 var fs   = require('fs');
-var url = require('url');
-
-var clients = [];
+var url  = require('url');
 
 server = http.createServer(function(req, res, sockable){ 
-    if(url.parse(req.url).pathname == '/socketio.js') {
-       fs.readFile('./socketio/support/socket.io-client/socket.io.js', function (err, data) {
-            if (err) throw err;
-            res.write(data);
-	        res.end();
-        });
-    } else {
-        fs.readFile('./frontend/kanban.html', function (err, data) {
-            if (err) throw err;
-            res.write(data);
-	        res.end();
-        });
-    }
-
+  fs.readFile('./frontend/kanban.html', function (err, data) {
+      if (err) throw err;
+      res.write(data);
+      res.end();
+  });
 });
+
 var port = 8124;
 server.listen(port);
 console.log('server listening on port ' + port);
 
-  
-// socket.io 
-var socket = io.listen(server); 
+var columns = [];
+var stories = [];
+ 
+var io = io.listen(server); 
 
-socket.on('connection', function(client){ 
-  clients.push(client);
+io.sockets.on('connection', function(socket){   
+  socket.emit('initStories', { "data": stories });
+  socket.emit('initColumns', { "data": columns.length });
 
-  client.on('message', function(mess){ 
+  socket.on('addcolumn', function(data){ 
+    socket.broadcast.emit('addcolumn');
+    var column = {};
+    columns.push(column);
+  });
 
-    for (cid in clients)
-    {
-      console.log('activerid:' + mess.rid);
-      clients[cid].send(mess);
+  socket.on('addstory', function(data){ 
+    socket.broadcast.emit('addstory');
+    var story = {};
+    stories.push(story);
+  });
+
+  socket.on('movestory', function(data){
+    socket.broadcast.emit('movestory', { "data": data});
+    var id = data.data.id;
+
+    for (var key in stories) {
+      findKey = "story-" + key;
+
+      if (findKey == id) {
+        stories[key].left = data.data.left;
+        stories[key].top  = data.data.top;
+      }
     };
-  }) 
-  client.on('disconnect', function(){ console.log('B') }) 
-  console.log(clients.length);
+  });  
 }); 

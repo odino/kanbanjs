@@ -1,7 +1,7 @@
 <html>
 <head>
 <style>
-	#draggable { width: 150px; height: 150px; padding: 0.5em; }  
+    #draggable { width: 150px; height: 150px; padding: 0.5em; }  
     .column { border-right: 1px solid black; height: 100%; float: left; text-align: center, width: 100% }
     .menu { width: 100% }
     .wrapper { width: 1024px }
@@ -19,9 +19,47 @@
 </div>
 
 </div>
-<script src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js' ></script>
-<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js' ></script>
+<script src='http://127.0.0.1/kanbanjs/frontend/jquery.min.js' ></script>
+<script src='http://127.0.0.1/kanbanjs/frontend/jquery-ui.js' ></script>
+<script src="/socket.io/socket.io.js"></script>
+
 <script>
+  var socket = io.connect(); 
+  socket.on('initStories', function (data) {
+    var stories = data.data;
+
+    for (key in stories) {
+      if (stories[key].top)
+      {
+        addStory(stories[key].top, stories[key].left);
+      } else {
+        addStory();
+      }
+    }
+  });
+
+  socket.on('initColumns', function (data) {
+    var columns = data.data;
+    
+    for (i = 0; i < columns; i++) {
+        addColumn()
+    }
+  });
+
+  socket.on('addcolumn', function () {
+    addColumn();
+  });
+
+
+  socket.on('addstory', function () {
+    addStory();
+  });
+
+
+  socket.on('movestory', function (data) {
+    $( "#" + data.data.data.id ).animate({ 'top': data.data.data.top, 'left': data.data.data.left }, 0);
+  });
+
 
 function addColumn ()
 {
@@ -29,18 +67,21 @@ function addColumn ()
   $( ".column" ).last().after('<div class="column"><h1>Plz more</h1></div>');
   $( ".column" ).css('width', 90/columns + '%');
 }
-
-function addStory ()
+ 
+function addStory (top, left)
 {
-    $( ".column" ).first().append('<div class="movable editable story" id="story-' + $('.story').length + '" >Story</div>');
+    var story = $('<div class="movable editable story" id="story-' + $('.story').length + '" >Story</div>');
+    $( ".column" ).first().append(story);
+    if (top !== undefined) {
+      story.animate({ 'top': top, 'left': left }, 0);
+    }
     $( ".movable" ).draggable({
        drag: function(event, ui) {
         info = {};
         info.id = $(this).attr('id');
         info.top = ui.position.top;
         info.left = ui.position.left;
-        info.rid = rid;
-        socket.send(info);
+        socket.emit('movestory', { "data": info });
       }
     });
     $( ".editable" ).dblclick(function(){
@@ -56,69 +97,29 @@ function addStory ()
         $("input").focusout(function(){
             val = $(this).attr('value');
             story.html(val);
-	    info = {};
+            info = {};
             info.storyId = id;
-	    info.storyValue = val;
-	    info.rid = rid;
-	    socket.send(info);
+            info.storyValue = val;
             $("input").remove();
             story.show();
         });
     });
-}
-
+};
+ 
 $( "#columnAdd" ).click(function(){
   addColumn();
-  info = {};
-  info.column = 1;
-  info.rid = rid;
-  socket.send(info);
+  socket.emit('addcolumn');
+
   return false;
 });
 $( "#storyAdd" ).click(function(){
   addStory();
-  info = {};
-  info.story = 1;
-  info.rid = rid;
-  socket.send(info);
+  socket.emit('addstory');
+  
   return false;
 });
 </script>
 
-<script src="http://127.0.0.1:8124/socketio.js"></script> 
-<script> 
- var rid = Math.floor(Math.random()*999);
- var socket = new io.Socket(); 
- socket.connect();
- socket.on('connect', function(){ console.log('connect') }) 
- socket.on('message', function(mess){
 
-  if (mess.column && rid !== mess.rid)
-  {
-    addColumn();
-  }
-
-  if (mess.story && rid !== mess.rid)
-  {
-    addStory();
-  }
-
-  if (mess.storyId && rid !== mess.rid)
-  {
-    console.log('editing story with');
-    console.log(mess);
-    story = $("#" + mess.storyId);
-    val = mess.storyValue;
-    story.html(val);
-  }
-
-  if (rid !== mess.rid)
-  { 
-    console.log(mess);
-    $( "#" + mess.id ).animate({ 'top': mess.top, 'left': mess.left }, 0);
-  }
-}) 
- socket.on('disconnect', function(){ console.log('disconnect') }) 
-</script> 
 </body>
 </html>
