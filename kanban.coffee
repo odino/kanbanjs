@@ -34,6 +34,13 @@ io.sockets.on 'connection', (socket) ->
     story = {}
     stories.push(story)
 
+  socket.on 'changeStoryName', (story) ->
+    socket.broadcast.emit('changeStoryName', story)
+    for key of stories
+      findKey = 'story-' + key
+      if findKey == story.id
+        stories[key].name = story.name
+
   socket.on 'movestory', (data) ->
     socket.broadcast.emit('movestory', { "data": data})
     id = data.data.id

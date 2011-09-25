@@ -3,7 +3,7 @@ socket.on 'initStories', (data) ->
   stories = data.data
   for key of stories
     if stories[key].top
-      addStory(stories[key].top, stories[key].left)
+      addStory(stories[key])
     else
       addStory()
 
@@ -18,6 +18,9 @@ socket.on 'addcolumn', () ->
 socket.on 'addstory', () ->
   addStory()
 
+socket.on 'changeStoryName', (story) ->
+  changeStoryName(story)
+
 socket.on 'movestory', (data) ->
   $( "#" + data.data.data.id ).animate({ 'top': data.data.data.top, 'left': data.data.data.left }, 0)
 
@@ -26,11 +29,12 @@ addColumn = ->
   $( ".column" ).last().after('<div class="column"><h1>Plz more</h1></div>')
   $( ".column" ).css('width', 90/columns + '%')
  
-addStory = (top, left) ->
+addStory = (originalStory) ->
   story = $('<div class="movable editable story" id="story-' + $('.story').length + '" >Story</div>');
   $( ".column" ).first().append(story)
-  if top?
-    story.animate({ 'top': top, 'left': left }, 0)
+  if originalStory?
+    story.animate({ 'top': originalStory.top, 'left': originalStory.left }, 0)
+    story.text(originalStory.name)
   $( ".movable" ).draggable({
      drag: (event, ui) ->
       info = {}
@@ -53,9 +57,10 @@ addStory = (top, left) ->
       val = $(this).attr('value')
       story.html(val)
       info = {}
-      info.storyId = id
-      info.storyValue = val
+      info.id = id
+      info.name = val
       $("input").remove()
+      socket.emit('changeStoryName', info);
       story.show()
 
  
@@ -68,3 +73,6 @@ $( "#storyAdd" ).click ->
   addStory()
   socket.emit('addstory')
   return false
+
+changeStoryName = (story) ->
+  $('#' + story.id).text(story.name)
