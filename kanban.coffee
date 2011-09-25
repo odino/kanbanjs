@@ -3,7 +3,6 @@ io      = require 'socket.io'
 fs      = require 'fs'
 url     = require 'url'
 sys     = require 'sys'
-colors  = require 'colors'
 
 server = http.createServer (req, res) -> 
   fs.readFile './frontend/kanban.html', (err, data) ->
